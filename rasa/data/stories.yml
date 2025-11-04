@@ -1,0 +1,60 @@
+version: "3.1"
+
+stories:
+  - story: greet and ask type
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: ask_type
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_type
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - story: ask stats
+    steps:
+      - intent: ask_stats
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_stats
+
+  - story: ask evolution
+    steps:
+      - intent: ask_evolution
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_evolution
+
+  - story: ask ability
+    steps:
+      - intent: ask_ability
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_ability
+
+  - story: search pokemon
+    steps:
+      - intent: search_pokemon
+        entities:
+          - pokemon_name
+      - action: action_search_pokemon
+
+  - story: goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - story: bot challenge
+    steps:
+      - intent: bot_challenge
+      - action: utter_bot_challenge
+
+  - story: pokemon not found
+    steps:
+      - intent: ask_type
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_type
+      - action: utter_pokemon_not_found
+

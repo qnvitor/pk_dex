@@ -1,0 +1,78 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - ask_type
+  - ask_stats
+  - ask_evolution
+  - ask_ability
+  - search_pokemon
+  - affirm
+  - deny
+  - bot_challenge
+
+entities:
+  - pokemon_name
+
+responses:
+  utter_greet:
+    - text: "Olá! Sou seu assistente de Pokédex. Como posso ajudar?"
+    - text: "Oi! Pronto para explorar o mundo dos Pokémon?"
+    - text: "Olá! Em que posso ajudá-lo sobre Pokémon?"
+
+  utter_goodbye:
+    - text: "Até logo! Continue explorando os Pokémon!"
+    - text: "Tchau! Volte sempre!"
+    - text: "Até mais! Aventure-se pelos Pokémon!"
+
+  utter_ask_type:
+    - text: "{pokemon_name} é do tipo {type_info}."
+    - text: "O tipo de {pokemon_name} é {type_info}."
+    - text: "{pokemon_name} é um Pokémon tipo {type_info}."
+
+  utter_ask_stats:
+    - text: "As estatísticas de {pokemon_name} são: {stats_info}."
+    - text: "Aqui estão os stats de {pokemon_name}: {stats_info}."
+    - text: "{pokemon_name} possui as seguintes estatísticas: {stats_info}."
+
+  utter_ask_evolution:
+    - text: "A cadeia de evolução: {evolution_info}."
+    - text: "Evoluções: {evolution_info}."
+    - text: "Aqui está a evolução: {evolution_info}."
+
+  utter_ask_ability:
+    - text: "As habilidades de {pokemon_name} são: {ability_info}."
+    - text: "{pokemon_name} possui as habilidades: {ability_info}."
+    - text: "Habilidades: {ability_info}."
+
+  utter_pokemon_info:
+    - text: "Aqui está a informação sobre {pokemon_name}: {info}."
+    - text: "Informações de {pokemon_name}: {info}."
+
+  utter_pokemon_not_found:
+    - text: "Desculpe, não encontrei informações sobre esse Pokémon."
+    - text: "Pokémon não encontrado. Tente outro nome ou ID."
+    - text: "Não consegui encontrar esse Pokémon na base de dados."
+
+  utter_bot_challenge:
+    - text: "Sim, sou um assistente de Pokédex! Posso ajudar com informações sobre Pokémon."
+    - text: "Claro! Estou aqui para ajudar com informações sobre Pokémon."
+    - text: "Sim! Sou especializado em informações sobre Pokémon."
+
+  utter_default:
+    - text: "Desculpe, não entendi. Pode reformular?"
+    - text: "Não consegui entender. Pode tentar novamente?"
+    - text: "Poderia ser mais específico sobre sua pergunta?"
+
+actions:
+  - action_get_pokemon_type
+  - action_get_pokemon_stats
+  - action_get_pokemon_evolution
+  - action_get_pokemon_ability
+  - action_search_pokemon
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
+

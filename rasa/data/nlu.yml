@@ -1,0 +1,106 @@
+version: "3.1"
+
+nlu:
+  - intent: greet
+    examples: |
+      - oi
+      - olá
+      - oi, tudo bem?
+      - bom dia
+      - boa tarde
+      - boa noite
+      - e aí
+      - eae
+      - hello
+      - hi
+
+  - intent: goodbye
+    examples: |
+      - tchau
+      - até logo
+      - até mais
+      - falou
+      - bye
+      - até depois
+      - até breve
+      - nos vemos
+
+  - intent: ask_type
+    examples: |
+      - qual é o tipo do [Pikachu](pokemon_name)?
+      - que tipo é o [Charizard](pokemon_name)?
+      - qual tipo de Pokémon é o [Bulbasaur](pokemon_name)?
+      - tipo do [Squirtle](pokemon_name)
+      - [Mewtwo](pokemon_name) é de que tipo?
+      - me diga o tipo do [Eevee](pokemon_name)
+      - qual a tipagem do [Gyarados](pokemon_name)?
+      - tipos do [Snorlax](pokemon_name)
+
+  - intent: ask_stats
+    examples: |
+      - quais são as estatísticas do [Pikachu](pokemon_name)?
+      - stats do [Charizard](pokemon_name)
+      - estatísticas de [Bulbasaur](pokemon_name)
+      - me mostre os stats do [Squirtle](pokemon_name)
+      - atributos do [Mewtwo](pokemon_name)
+      - informações de stats do [Eevee](pokemon_name)
+      - poder de ataque do [Gyarados](pokemon_name)
+      - defesa do [Snorlax](pokemon_name)
+
+  - intent: ask_evolution
+    examples: |
+      - quem evolui do [Eevee](pokemon_name)?
+      - evolução do [Pikachu](pokemon_name)
+      - evoluções de [Bulbasaur](pokemon_name)
+      - para quem o [Charmander](pokemon_name) evolui?
+      - cadeia de evolução do [Squirtle](pokemon_name)
+      - o que evolui de [Pichu](pokemon_name)?
+      - evoluções de [Magikarp](pokemon_name)
+
+  - intent: ask_ability
+    examples: |
+      - quais são as habilidades do [Pikachu](pokemon_name)?
+      - habilidades de [Charizard](pokemon_name)
+      - ability do [Bulbasaur](pokemon_name)
+      - me diga as habilidades do [Squirtle](pokemon_name)
+      - poderes do [Mewtwo](pokemon_name)
+      - skills do [Eevee](pokemon_name)
+
+  - intent: search_pokemon
+    examples: |
+      - me fale sobre o [Pikachu](pokemon_name)
+      - informações sobre [Charizard](pokemon_name)
+      - o que você sabe do [Bulbasaur](pokemon_name)?
+      - [Squirtle](pokemon_name)
+      - pokémon [Mewtwo](pokemon_name)
+      - quero saber sobre [Eevee](pokemon_name)
+      - dados do [Gyarados](pokemon_name)
+      - [Snorlax](pokemon_name) pokémon
+
+  - intent: bot_challenge
+    examples: |
+      - você é um bot?
+      - você é um assistente?
+      - o que você faz?
+      - quem é você?
+      - você é inteligente?
+      - você entende português?
+
+  - intent: affirm
+    examples: |
+      - sim
+      - claro
+      - com certeza
+      - ok
+      - está bem
+      - tudo bem
+      - correto
+
+  - intent: deny
+    examples: |
+      - não
+      - não quero
+      - não preciso
+      - negativo
+      - não é isso
+

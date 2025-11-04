@@ -1,0 +1,53 @@
+version: "3.1"
+
+rules:
+  - rule: Responder saudação
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - rule: Responder despedida
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - rule: Responder desafio do bot
+    steps:
+      - intent: bot_challenge
+      - action: utter_bot_challenge
+
+  - rule: Buscar tipo quando perguntado
+    steps:
+      - intent: ask_type
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_type
+
+  - rule: Buscar stats quando perguntado
+    steps:
+      - intent: ask_stats
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_stats
+
+  - rule: Buscar evolução quando perguntado
+    steps:
+      - intent: ask_evolution
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_evolution
+
+  - rule: Buscar habilidades quando perguntado
+    steps:
+      - intent: ask_ability
+        entities:
+          - pokemon_name
+      - action: action_get_pokemon_ability
+
+  - rule: Buscar informações gerais do Pokémon
+    steps:
+      - intent: search_pokemon
+        entities:
+          - pokemon_name
+      - action: action_search_pokemon
+
