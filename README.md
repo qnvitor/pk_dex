@@ -21,8 +21,10 @@ Sistema completo de Pokédex que combina **Visão Computacional**, **Processamen
 
 ### 💬 Chatbot Interativo
 - Faça perguntas sobre Pokémon em linguagem natural
-- Pergunte sobre tipos, stats, evoluções e habilidades
-- **Chatbot simples com pattern matching** (compatível Python 3.13)
+- **RAG (Retrieval-Augmented Generation)** com Ollama + Llama 3.2:3b
+- **Busca semântica** em base de conhecimento de 151 Pokémon
+- **ChromaDB** para vector store e **Sentence Transformers** para embeddings
+- Respostas contextualizadas e precisas baseadas em dados reais
 - Histórico de conversação
 - Exemplos de perguntas prontas
 
@@ -34,7 +36,9 @@ Sistema completo de Pokédex que combina **Visão Computacional**, **Processamen
 | Arquitetura | **Monolítica** | Simples e ideal para MVP |
 | Interface | **Streamlit** | Sistema de páginas múltiplas nativo |
 | Visão Computacional | **MobileNetV2 (PyTorch)** | Modelo treinado com 96%+ acurácia |
-| Chatbot / PLN | **Chatbot Simples (Pattern Matching)** | Leve, sem dependências pesadas, compatível Python 3.13 |
+| Chatbot / PLN | **RAG com Ollama (Llama 3.2:3b)** | Busca semântica + LLM para respostas contextualizadas |
+| Vector Store | **ChromaDB** | Armazenamento de embeddings para RAG |
+| Embeddings | **Sentence Transformers** | Geração de embeddings semânticos |
 | Base de Dados | **PokéAPI** | API atualizada e aberta |
 | Banco de Dados | **SQLite Local** | Cache inteligente com TTL |
 | Hospedagem | **Streamlit Cloud / Localhost** | Gratuita e prática |
@@ -42,9 +46,16 @@ Sistema completo de Pokédex que combina **Visão Computacional**, **Processamen
 
 ## 📋 Pré-requisitos
 
+### Básico
 - **Python 3.13** (recomendado) ou Python 3.8+
 - pip (gerenciador de pacotes Python)
 - Git (opcional)
+
+### Para Chatbot RAG (Opcional)
+- **Ollama** instalado ([Download](https://ollama.ai))
+- **Modelo Llama 3.2:3b** baixado (`ollama pull llama3.2:3b`)
+- ~2GB de espaço para o modelo
+- 8GB+ RAM (16GB recomendado)
 
 ## 🔧 Instalação
 
@@ -83,18 +94,80 @@ python setup.py
 
 ## 🚀 Como Usar
 
-### Executando a Aplicação Streamlit
+### Executando a Aplicação
+
+#### Opção 1: Execução Básica (Sem RAG/Chatbot IA)
 
 ```bash
+# 1. Ative o ambiente virtual
+# Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+
+# Linux/Mac:
+source venv/bin/activate
+
+# 2. Execute o Streamlit
 streamlit run streamlit_app.py
 ```
 
 A aplicação estará disponível em `http://localhost:8501`
 
+#### Opção 2: Execução Completa (Com RAG/Chatbot IA)
+
+**Pré-requisitos adicionais:**
+- Ollama instalado ([Download](https://ollama.ai))
+- Modelo Llama 3.2:3b baixado
+
+**Passo a passo:**
+
+```powershell
+# Terminal 1 - Ollama (deixar rodando)
+ollama serve
+
+# Terminal 2 - Streamlit
+cd <caminho-do-projeto>
+.\venv\Scripts\Activate.ps1
+
+# Primeira vez: Indexar base de conhecimento (2-3 min)
+python scripts/index_pokemon_auto.py
+
+# Executar aplicação
+streamlit run streamlit_app.py
+```
+
+**Verificar instalação do Ollama:**
+```powershell
+# Verificar versão
+ollama --version
+
+# Listar modelos instalados
+ollama list
+
+# Baixar modelo (se necessário)
+ollama pull llama3.2:3b
+```
+
 **Navegação:**
 - A aplicação usa o sistema de páginas múltiplas nativo do Streamlit
 - Navegue entre as páginas usando o menu lateral
 - Cada página é um arquivo separado em `pages/`
+
+### Recursos Necessários
+
+| Componente | Mínimo | Recomendado |
+|------------|--------|-------------|
+| RAM | 8GB | 16GB |
+| Armazenamento | 5GB | 10GB |
+| Python | 3.8+ | 3.13 |
+
+**Portas utilizadas:**
+- Streamlit: `8501`
+- Ollama: `11434`
+
+**Armazenamento:**
+- Modelo Llama 3.2:3b: ~2GB
+- Vector Store (ChromaDB): ~50MB
+- Cache SQLite: ~10MB
 
 ### Funcionalidades Detalhadas
 
@@ -134,32 +207,49 @@ A aplicação estará disponível em `http://localhost:8501`
 ```
 dex_PI/
 ├── pages/                    # Páginas do Streamlit (sistema nativo)
-│   ├── 1_🏠_Home.py         # Página inicial
-│   ├── 2_🔍_Buscar.py       # Busca de Pokémon
-│   ├── 3_📸_Reconhecimento.py # Reconhecimento de imagem
-│   └── 4_💬_Chatbot.py      # Chatbot interativo
-├── app/                      # Componentes auxiliares (legado)
-│   ├── components/          # Componentes reutilizáveis
-│   └── pages/               # Páginas antigas (não usadas)
+│   ├── 1_Home.py            # Página inicial
+│   ├── 2_Buscar.py          # Busca de Pokémon
+│   ├── 3_Reconhecimento.py  # Reconhecimento de imagem
+│   └── 4_Chatbot.py         # Chatbot RAG com Ollama
 ├── src/                      # Código fonte
 │   ├── api/                 # Cliente PokéAPI
-│   ├── vision/             # Visão computacional
+│   ├── vision/              # Visão computacional
 │   │   ├── model_loader.py  # Carregador de modelo
 │   │   └── pokemon_classifier.py # Classificador
-│   ├── chatbot/             # Chatbot simples (pattern matching)
-│   └── database/            # Gerenciamento SQLite
+│   ├── chatbot/             # Chatbot simples (fallback)
+│   ├── rag/                 # Sistema RAG
+│   │   ├── ollama_client.py # Cliente Ollama
+│   │   ├── vector_store.py  # ChromaDB vector store
+│   │   ├── embeddings.py    # Gerador de embeddings
+│   │   ├── pokemon_knowledge.py # Base de conhecimento
+│   │   └── rag_chatbot.py   # Chatbot RAG principal
+│   ├── components/          # Componentes UI
+│   │   ├── pokedex_card.py  # Cards de Pokémon
+│   │   ├── search_bar.py    # Barra de busca
+│   │   └── pokemon_card.py  # Card de exibição
+│   ├── utils/               # Utilitários
+│   │   └── theme_utils.py   # Tema Pokédex
+│   ├── database/            # Gerenciamento SQLite
+│   └── config.py            # Configuração centralizada
+├── assets/                   # Recursos visuais
+│   └── css/
+│       └── pokedex.css      # Tema Pokédex customizado
 ├── scripts/                  # Scripts utilitários
-│   └── train_model.py       # Treinamento do modelo
+│   ├── train_model.py       # Treinamento do modelo
+│   ├── index_pokemon.py     # Indexação interativa
+│   └── index_pokemon_auto.py # Indexação automática
 ├── models/                   # Modelos treinados (gitignored)
 │   └── mobilenet_pokemon/   # Modelo MobileNetV2 treinado
 ├── data/                     # Dados e cache (gitignored)
 │   ├── pokemon_images/      # Imagens para treinamento
-│   └── pokemon_db.sqlite    # Cache SQLite
-├── rasa/                     # Configuração Rasa (opcional, para uso futuro)
-├── streamlit_app.py          # Ponto de entrada principal
-├── requirements.txt          # Dependências
-├── setup.py                  # Script de inicialização
-└── README.md                 # Este arquivo
+│   ├── pokemon_db.sqlite    # Cache SQLite
+│   └── chroma_db/           # Vector store ChromaDB
+├── .streamlit/              # Configuração Streamlit
+│   └── config.toml          # Tema Pokédex
+├── streamlit_app.py         # Ponto de entrada principal
+├── requirements.txt         # Dependências
+├── setup.py                 # Script de inicialização
+└── README.md                # Este arquivo
 ```
 
 ## 🧪 Treinamento do Modelo de Visão
@@ -207,7 +297,6 @@ python scripts/train_model.py --train --epochs 20 --batch-size 16
 - `--num-pokemon`: Número de Pokémon (padrão: 151)
 
 **Resultado Esperado:**
-- Acurácia de validação: 90%+ (com dados suficientes)
 - Modelo salvo em: `models/mobilenet_pokemon/model.pth`
 
 ## 📊 Performance do Modelo
@@ -231,66 +320,6 @@ O modelo atual foi treinado com:
 - **Anonimização**: Consultas são anonimizadas automaticamente
 - **Timeout em requisições**: Proteção contra travamentos
 
-## 🐛 Troubleshooting
-
-### Problema: Aplicação não inicia ou páginas ficam brancas
-**Solução**: 
-- Certifique-se de usar Python 3.13 ou 3.8+
-- Instale todas as dependências: `pip install -r requirements.txt`
-- Limpe o cache do Streamlit: `streamlit cache clear`
-- Reinicie o Streamlit
-
-### Problema: Modelo de visão com baixa precisão
-**Solução**: 
-- O modelo base (não treinado) tem precisão baixa
-- Treine o modelo: `python scripts/train_model.py --train --epochs 20`
-- Use imagens similares às sprites oficiais para melhor resultado
-- Ajuste o slider de "Confiança mínima" na interface
-
-### Problema: Chatbot não entende minha pergunta
-**Solução**: O chatbot usa pattern matching simples. Tente reformular usando palavras-chave como:
-- "tipo do [nome]"
-- "stats do [nome]" ou "estatísticas do [nome]"
-- "habilidades do [nome]"
-- "evoluções do [nome]" ou "quem evolui do [nome]"
-- "fale sobre [nome]"
-
-**Nota sobre Rasa:** O projeto originalmente usava Rasa, mas foi migrado para um chatbot simples compatível com Python 3.13. Se quiser usar Rasa no futuro (requer Python 3.8-3.11), os arquivos de configuração estão na pasta `rasa/`.
-
-### Problema: Erro ao buscar Pokémon
-**Solução**: 
-- Verifique sua conexão com a internet (PokéAPI requer acesso web)
-- O cache local ajudará em requisições subsequentes
-- Timeout de 5 segundos pode ser ajustado no código
-
-### Problema: PyTorch não instala
-**Solução**: 
-- PyTorch tem excelente suporte para Python 3.13
-- Verifique a versão: `python --version`
-- Instale diretamente: `pip install torch torchvision`
-- Se persistir, verifique: https://pytorch.org/get-started/locally/
-
-### Problema: Erro de encoding no Windows
-**Solução**: 
-- Alguns arquivos podem ter problemas de encoding
-- O código já trata erros de encoding automaticamente
-- Se necessário, salve arquivos `.env` com encoding UTF-8
-
-### Problema: Banco de dados SQLite travado
-**Solução**: 
-- O código já tem timeout de 2 segundos nas conexões
-- Se persistir, delete o arquivo `data/pokemon_db.sqlite` e reinicie
-- O banco será recriado automaticamente
-
-## 🎯 Melhorias Futuras
-
-- [ ] Suporte para mais gerações de Pokémon
-- [ ] Treinamento com mais imagens por Pokémon
-- [ ] Melhorias no chatbot (mais padrões)
-- [ ] Comparação visual entre Pokémon
-- [ ] Exportação de dados em PDF/JSON
-- [ ] Histórico de buscas
-
 ## 📝 Licença
 
 Este projeto é open source e está disponível para uso educacional e pessoal.
@@ -304,8 +333,3 @@ Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull r
 Para dúvidas ou sugestões, abra uma issue no repositório.
 
 ---
-
-**Desenvolvido com ❤️ usando tecnologias de código aberto**
-
-**Versão:** 1.0.0  
-**Última atualização:** Novembro 2025

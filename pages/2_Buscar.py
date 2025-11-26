@@ -1,12 +1,23 @@
 """Página de busca de Pokémon."""
 
 import streamlit as st
+import sys
+from pathlib import Path
+
+# Adiciona o diretório raiz ao path
+root_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(root_dir))
+
+from src.utils.theme_utils import load_pokedex_css
+
+# Carrega tema
+load_pokedex_css()
 
 st.title("🔍 Buscar Pokémon")
 
 try:
-    from app.components.search_bar import search_bar, quick_search_buttons
-    from app.components.pokemon_card import display_pokemon_card
+    from src.components.search_bar import search_bar, quick_search_buttons
+    from src.components.pokemon_card import display_pokemon_card
     from src.api.pokeapi_client import PokeAPIClient
     
     @st.cache_resource
@@ -42,4 +53,3 @@ try:
                 st.error(f"Erro ao buscar Pokémon: {e}")
 except Exception as e:
     st.error(f"Erro ao carregar página: {e}")
-

@@ -8,6 +8,10 @@ from pathlib import Path
 root_dir = Path(__file__).parent
 sys.path.insert(0, str(root_dir))
 
+# Carrega tema Pokédex
+from src.utils.theme_utils import load_pokedex_css
+load_pokedex_css()
+
 # Configuração da página
 st.set_page_config(
     page_title="Pokédex com IA",
@@ -16,17 +20,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.sidebar.markdown("""
-### 📚 Sobre
-Sistema de Pokédex inteligente com:
-- **Visão Computacional** (PyTorch + MobileNetV2)
-- **Chatbot** (Pattern Matching)
-- **Cache Inteligente** (SQLite)
-- **API Externa** (PokéAPI)
-""")
+# CSS para ocultar a aba "Streamlit app" do menu
+st.markdown("""
+    <style>
+    /* Oculta a primeira página (Streamlit app) do menu lateral */
+    [data-testid="stSidebarNav"] li:first-child {
+        display: none;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-st.sidebar.markdown("---")
-st.sidebar.info("""
-**Nota:** Esta aplicação usa o sistema de páginas múltiplas nativo do Streamlit.
-Navegue usando o menu lateral.
-""")
+# Redireciona automaticamente para a página Home
+st.switch_page("pages/1_Home.py")

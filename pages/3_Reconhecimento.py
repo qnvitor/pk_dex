@@ -1,6 +1,17 @@
 """Página de reconhecimento de imagem de Pokémon."""
 
 import streamlit as st
+import sys
+from pathlib import Path
+
+# Adiciona o diretório raiz ao path
+root_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(root_dir))
+
+from src.utils.theme_utils import load_pokedex_css
+
+# Carrega tema
+load_pokedex_css()
 
 st.title("📸 Reconhecimento de Imagem de Pokémon")
 
@@ -15,8 +26,8 @@ try:
     from PIL import Image
     from src.vision.pokemon_classifier import PokemonClassifier
     from src.api.pokeapi_client import PokeAPIClient
-    from app.components.image_upload import image_upload_widget
-    from app.components.pokemon_card import display_pokemon_card
+    from src.components.image_upload import image_upload_widget
+    from src.components.pokemon_card import display_pokemon_card
     
     @st.cache_resource
     def get_classifier():
