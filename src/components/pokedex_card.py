@@ -91,65 +91,61 @@ def render_pokedex_card(pokemon_data: Dict[str, Any], show_stats: bool = True):
     if not sprite:
         sprite = pokemon_data.get('sprites', {}).get('front_default')
     
-    # Container do card
-    st.markdown("""
-        <div class="pokemon-card">
-    """, unsafe_allow_html=True)
-    
-    # ID Badge
-    st.markdown(f"""
-        <div style="
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #DC0A2D;
-            color: #FFCB05;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-family: 'Orbitron', sans-serif;
-            z-index: 10;
-        ">
-            #{pokemon_id:03d}
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Sprite
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if sprite:
-            st.image(sprite, use_container_width=True)
-    
-    # Nome
-    st.markdown(f"""
-        <h2 style="
-            font-family: 'Orbitron', sans-serif;
-            color: #FFCB05;
-            text-align: center;
-            margin: 10px 0;
-            font-size: 2em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        ">
-            {name}
-        </h2>
-    """, unsafe_allow_html=True)
-    
-    # Tipos
-    st.markdown("<div style='text-align: center; margin: 16px 0;'>", unsafe_allow_html=True)
+    # Build types HTML
+    types_html = ""
     for ptype in types:
-        render_type_badge(ptype)
-    st.markdown("</div>", unsafe_allow_html=True)
+        text_color = "#1A1A1A" if ptype.lower() == "electric" else "white"
+        types_html += '<span class="type-badge type-' + ptype.lower() + '" style="color: ' + text_color + ';">' + ptype.upper() + '</span>'
     
-    # Stats
+    # Build stats HTML
+    stats_html = ""
     if show_stats and 'stats' in pokemon_data:
-        st.markdown("<div style='margin-top: 20px;'>", unsafe_allow_html=True)
         for stat in pokemon_data['stats']:
             stat_name = stat['stat']['name'].replace('-', ' ')
             stat_value = stat['base_stat']
-            render_stat_bar(stat_name, stat_value)
-        st.markdown("</div>", unsafe_allow_html=True)
+            percentage = min((stat_value / 255) * 100, 100)
+            
+            # Cor baseada no valor
+            if stat_value >= 150:
+                color = "#00FF88"
+            elif stat_value >= 100:
+                color = "#FFCB05"
+            elif stat_value >= 50:
+                color = "#0075BE"
+            else:
+                color = "#DC0A2D"
+            
+            stats_html += '<div class="stat-bar-container">'
+            stats_html += '<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">'
+            stats_html += '<span style="color: #FFCB05; font-weight: bold; font-family: Orbitron, sans-serif; font-size: 0.9em;">' + stat_name.upper() + '</span>'
+            stats_html += '<span style="color: #F5F5F5; font-weight: bold; font-family: Orbitron, sans-serif;">' + str(stat_value) + '</span>'
+            stats_html += '</div>'
+            stats_html += '<div class="stat-bar">'
+            stats_html += '<div class="stat-bar-fill" style="width: ' + str(percentage) + '%; background: linear-gradient(90deg, ' + color + ' 0%, ' + color + 'aa 100%);"></div>'
+            stats_html += '</div>'
+            stats_html += '</div>'
     
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Render complete card as single HTML block
+    card_html = '<div class="pokemon-card">'
+    card_html += '<div style="position: absolute; top: 10px; right: 10px; background: #DC0A2D; color: #FFCB05; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-family: Orbitron, sans-serif; z-index: 10;">'
+    card_html += '#' + f'{pokemon_id:03d}'
+    card_html += '</div>'
+    card_html += '<div style="text-align: center; margin: 20px 0;">'
+    card_html += '<img src="' + str(sprite) + '" style="max-width: 300px; width: 100%; height: auto;" />'
+    card_html += '</div>'
+    card_html += '<h2 style="font-family: Orbitron, sans-serif; color: #FFCB05; text-align: center; margin: 10px 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">'
+    card_html += name
+    card_html += '</h2>'
+    card_html += '<div style="text-align: center; margin: 16px 0;">'
+    card_html += types_html
+    card_html += '</div>'
+    card_html += '<div style="margin-top: 20px;">'
+    card_html += stats_html
+    card_html += '</div>'
+    card_html += '</div>'
+    
+    st.markdown(card_html, unsafe_allow_html=True)
+
 
 
 def render_mini_pokemon_card(pokemon_name: str, pokemon_id: int, on_click_key: str = None):

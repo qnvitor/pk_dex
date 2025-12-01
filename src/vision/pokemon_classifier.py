@@ -19,6 +19,21 @@ except Exception:
 NUM_PREDICTIONS = int(os.getenv('NUM_PREDICTIONS', 5))
 
 
+# =============================================================================
+# POKEMONCLASSIFIER - Sistema de Inferência para Reconhecimento de Imagens
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Recebe imagem de Pokémon e retorna predições com níveis de confiança
+#    - Pré-processa imagens (resize, normalização, etc.)
+#    - Executa inferência usando modelo treinado
+#    - Retorna top-N predições ordenadas por confiança
+#
+#  REFERÊNCIAS:
+#    - Usado por pages/3_Reconhecimento.py linha 48
+#    - Carrega modelo via src/vision/model_loader.py linha 27
+#    - Modelo treinado em scripts/train_model.py
+
 class PokemonClassifier:
     """Classificador de imagens de Pokémon."""
     
@@ -30,8 +45,15 @@ class PokemonClassifier:
         self.input_shape = (224, 224)
         self.num_predictions = NUM_PREDICTIONS
         
-        # Transformações de pré-processamento melhoradas
-        # Usa resize adaptativo para manter proporção
+        # ---------------------------------------------------------------------------
+        # TRANSFORMAÇÕES DE PRÉ-PROCESSAMENTO
+        # ---------------------------------------------------------------------------
+        # - Resize 256x256 → CenterCrop 224x224: padrão MobileNetV2
+        # - ToTensor: converte PIL Image (0-255) para Tensor (0.0-1.0)
+        # - Normalize: usa média/desvio do ImageNet (padrão para modelos pré-treinados)
+        # 
+        # antialias=True: suaviza redimensionamento para melhor qualidade
+        # ---------------------------------------------------------------------------
         self.transform = transforms.Compose([
             transforms.Resize((256, 256), antialias=True),
             transforms.CenterCrop(224),
@@ -95,17 +117,18 @@ class PokemonClassifier:
         processed = self.preprocess_image(image)
         
         # Faz predição
-        with torch.no_grad():
-            outputs = self.model(processed)
-            probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
+        with torch.no_grad():  # Desliga gradientes (economiza memória)
+            outputs = self.model(processed)  # Forward pass
+            probabilities = torch.nn.functional.softmax(outputs[0], dim=0)  # Converte para probabilidades
         
         # Obtém top-N predições
         top_probs, top_indices = torch.topk(probabilities, self.num_predictions)
         
+        # Formata resultados: índice do tensor (0-150) → ID do Pokémon (1-151)
         top_predictions = [
             (int(idx.item() + 1), float(top_probs[i].item()))  # ID começa em 1
             for i, idx in enumerate(top_indices)
-            if float(top_probs[i].item()) >= min_confidence
+            if float(top_probs[i].item()) >= min_confidence  # Filtra por confiança mínima
         ]
         
         return top_predictions

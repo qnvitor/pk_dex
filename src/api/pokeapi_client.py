@@ -15,6 +15,20 @@ except Exception:
 POKEAPI_BASE_URL = os.getenv('POKEAPI_BASE_URL', 'https://pokeapi.co/api/v2')
 
 
+# =============================================================================
+# POKEAPICLIENT - Cliente HTTP com Cache Inteligente (Cache-Aside Pattern)
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Wrapper da PokéAPI com sistema de cache SQLite local
+#    - Implementa padrão Cache-Aside com TTL (Time-To-Live)
+#    - Reduz latência e uso de rede com cache automático
+#
+#  REFERÊNCIAS:
+#    - Usado por: todas as páginas (Buscar, Reconhecimento, Chatbot)
+#    - Usa DatabaseManager de src/database/db_manager.py linha 26
+#    - Cache salvo em: data/pokemon_db.sqlite
+
 class PokeAPIClient:
     """Cliente para PokéAPI com sistema de cache."""
     
@@ -63,16 +77,29 @@ class PokeAPIClient:
         Returns:
             Dados do Pokémon ou None
         """
+        # ---------------------------------------------------------------------------
+        # CACHE-ASIDE PATTERN - Fluxo de Leitura
+        # ---------------------------------------------------------------------------
+        # 1. Verifica cache primeiro (fast path)
+        # 2. Se encontrar e não expirou (TTL), retorna imediatamente
+        # 3. Se não encontrar, busca na API (slow path)
+        # 4. Salva resultado no cache para próximas consultas
+        # 
+        # Performance:
+        # - Cache hit: ~5ms (SQLite local)
+        # - Cache miss: ~500ms (requisição HTTP + rede)
+        # ---------------------------------------------------------------------------
+        
         # Verifica cache primeiro (se disponível)
         if self.db_manager:
             try:
                 cached = self.db_manager.get_cached(str(pokemon_id))
                 if cached:
-                    return cached
+                    return cached  # Cache hit - retorna imediatamente!
             except Exception as e:
                 print(f"[AVISO API] Erro ao buscar cache: {e}")
         
-        # Busca na API
+        # Busca na API (cache miss)
         data = self._make_request(f'pokemon/{pokemon_id}')
         
         if data and self.db_manager:

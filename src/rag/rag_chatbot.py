@@ -7,6 +7,22 @@ from src.rag.vector_store import PokemonVectorStore
 from src.api.pokeapi_client import PokeAPIClient
 
 
+# =============================================================================
+# RAGCHATBOT - Chatbot Inteligente com RAG (Retrieval-Augmented Generation)
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Implementa pipeline RAG completo para perguntas sobre Pokémon
+#    - Busca informações relevantes em base de conhecimento (ChromaDB)
+#    - Injeta contexto no prompt para LLM gerar respostas precisas
+#    - Fallback para modo LLM puro se RAG estiver desativado
+#
+#  REFERÊNCIAS:
+#    - Usado por pages/4_Chatbot.py linha 82
+#    - Usa OllamaClient de src/rag/ollama_client.py linha 35
+#    - Usa PokemonVectorStore de src/rag/vector_store.py linha 54
+#    - Base indexada por scripts/index_pokemon_auto.py
+
 class RAGChatbot:
     """Chatbot inteligente com RAG para perguntas sobre Pokémon."""
     
@@ -78,17 +94,17 @@ class RAGChatbot:
         # 1. Recupera contexto relevante (se RAG ativado)
         context = ""
         if self.use_rag and self.vector_store:
-            context = self._retrieve_context(message)
+            context = self._retrieve_context(message)  # RETRIEVAL
         
         # 2. Monta prompt com sistema
-        prompt = self._build_prompt(message, context)
+        prompt = self._build_prompt(message, context)  # AUGMENTATION
         
         # 3. Gera resposta
         try:
-            response = self.ollama.generate(
+            response = self.ollama.generate(  # GENERATION
                 prompt=prompt,
-                temperature=0.7,
-                max_tokens=500
+                temperature=0.7,  # Criatividade moderada
+                max_tokens=500    # Limite de resposta
             )
             return response
         except Exception as e:
@@ -109,10 +125,22 @@ class RAGChatbot:
             return ""
         
         try:
+            # ---------------------------------------------------------------------------
+            # BUSCA SEMÂNTICA (Similarity Search)
+            # ---------------------------------------------------------------------------
+            # 1. Converte query em embedding (vetor numérico)
+            # 2. Busca os N documentos mais similares por distância vetorial (cosine)
+            # 3. Retorna documentos ordenados por relevância
+            # 
+            # Exemplo:
+            # Query: "Qual o tipo do Pikachu?"
+            # Retrieval: [Documento sobre Pikachu, Documento sobre Elétrico, ...]
+            # ---------------------------------------------------------------------------
+            
             # Busca documentos similares
             results = self.vector_store.search(
                 query=query,
-                n_results=self.n_context_docs
+                n_results=self.n_context_docs  # Top-K documentos
             )
             
             if not results or not results.get('documents') or not results['documents'][0]:
@@ -144,6 +172,20 @@ class RAGChatbot:
         Returns:
             Prompt formatado
         """
+        # ---------------------------------------------------------------------------
+        # PROMPT ENGINEERING - Arte de Instruir o LLM
+        # ---------------------------------------------------------------------------
+        # Estrutura do prompt:
+        # 1. System prompt: define persona e comportamento do assistente
+        # 2. Contexto: informações recuperadas do vector store (se RAG ativo)
+        # 3. Pergunta: query do usuário
+        # 
+        # Por que importante:
+        # - System prompt guia tom e estilo das respostas
+        # - Contexto fornece fatos específicos (evita alucinações)
+        # - Instruções claras melhoram qualidade da resposta
+        # ---------------------------------------------------------------------------
+        
         system_prompt = """Você é um assistente especializado em Pokémon, amigável e prestativo.
 
 INSTRUÇÕES:
@@ -159,6 +201,7 @@ IMPORTANTE: Responda APENAS sobre Pokémon. Se a pergunta não for sobre Pokémo
 diga educadamente que você só pode ajudar com perguntas sobre Pokémon."""
         
         if context:
+            # Modo RAG: injeta contexto no prompt
             prompt = f"""{system_prompt}
 
 CONTEXTO COM INFORMAÇÕES RELEVANTES:
@@ -168,6 +211,7 @@ PERGUNTA DO USUÁRIO: {question}
 
 RESPOSTA:"""
         else:
+            # Modo LLM puro: sem contexto externo
             prompt = f"""{system_prompt}
 
 PERGUNTA DO USUÁRIO: {question}

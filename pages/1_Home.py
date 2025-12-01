@@ -57,27 +57,43 @@ try:
             text-align: center;
             margin: 30px 0 20px 0;
         ">
-            Pokémon Populares
+            Descubra Pokémons
         </h2>
     """, unsafe_allow_html=True)
     
-    @st.cache_data(ttl=3600, show_spinner=False)
-    def load_pokemon_list():
+    @st.cache_data(ttl=None, show_spinner=False)
+    def load_all_pokemon():
+        """Carrega lista completa de Pokémon disponíveis (primeira geração)."""
         try:
-            return api_client.get_pokemon_list(limit=12) or []
+            # Carrega os primeiros 151 Pokémon (primeira geração)
+            return api_client.get_pokemon_list(limit=151) or []
         except Exception as e:
             st.warning(f"Erro ao carregar: {e}")
             return []
     
-    pokemon_list = load_pokemon_list()
+    def get_random_pokemon(num_pokemon=12):
+        """Seleciona Pokémon aleatórios da lista completa."""
+        import random
+        all_pokemon = load_all_pokemon()
+        if len(all_pokemon) > num_pokemon:
+            return random.sample(all_pokemon, num_pokemon)
+        return all_pokemon[:num_pokemon]
+    
+    # Gera nova lista de Pokémon aleatórios apenas na primeira vez
+    if 'random_pokemon_list' not in st.session_state:
+        st.session_state.random_pokemon_list = get_random_pokemon(12)
+    
+    pokemon_list = st.session_state.random_pokemon_list
     
     if pokemon_list:
         cols = st.columns(4)
         for idx, pokemon in enumerate(pokemon_list):
             col = cols[idx % 4]
             with col:
-                # Extrai ID do URL
-                pokemon_id = idx + 1
+                # Extrai ID do URL do Pokémon
+                pokemon_url = pokemon.get('url', '')
+                pokemon_id = int(pokemon_url.rstrip('/').split('/')[-1]) if pokemon_url else idx + 1
+                
                 # Renderiza card e verifica se foi clicado
                 if render_mini_pokemon_card(
                     pokemon['name'],

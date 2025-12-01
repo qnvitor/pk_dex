@@ -10,6 +10,22 @@ sys.path.insert(0, str(root_dir))
 from src.rag.pokemon_knowledge import PokemonKnowledgeBuilder
 
 
+# =============================================================================
+# INDEX_POKEMON_AUTO - Script de Indexação da Base de Conhecimento RAG
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Baixa dados de 151 Pokémon da PokéAPI
+#    - Gera embeddings semânticos para cada Pokémon
+#    - Armazena na base ChromaDB para busca vetorial
+#    - Popular vector store ANTES de usar chatbot RAG
+#
+#  REFERÊNCIAS:
+#    - Usa PokemonKnowledgeBuilder de src/rag/pokemon_knowledge.py linha 20
+#    - Popula PokemonVectorStore usado por src/rag/rag_chatbot.py linha 54
+#    - Dados salvos em: data/chroma_db/
+
+
 def main():
     """Função principal de indexação automática."""
     print("=" * 60)

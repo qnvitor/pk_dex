@@ -21,6 +21,20 @@ from src.vision.model_loader import PokemonClassifierModel, ModelLoader
 from src.api.pokeapi_client import PokeAPIClient
 
 
+# =============================================================================
+# POKEMONDATASET - Dataset Customizado para PyTorch
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Organiza imagens de Pokémon para treinamento do modelo
+#    - Carrega imagens de subpastas organizadas por ID (data/pokemon_images/1/, 2/, etc.)
+#    - Aplica transformações (data augmentation) durante o carregamento
+#
+#  REFERÊNCIAS:
+#    - Usado pela função train_model() linha 146
+#    - Imagens baixadas pela função download_pokemon_images() linha 59
+#    - Estrutura esperada: data/pokemon_images/{pokemon_id}/*.png
+
 class PokemonDataset(Dataset):
     """Dataset de imagens de Pokémon."""
     
@@ -55,6 +69,20 @@ class PokemonDataset(Dataset):
         
         return image, label
 
+
+# =============================================================================
+# DOWNLOAD_POKEMON_IMAGES - Web Scraping Automático da PokéAPI
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Baixa automaticamente múltiplas sprites de cada Pokémon da PokéAPI
+#    - Organiza em pastas por ID: data/pokemon_images/1/, 2/, etc.
+#    - Baixa 3 versões: oficial (melhor qualidade), padrão e shiny
+#
+#  REFERÊNCIAS:
+#    - Usa PokeAPIClient de src/api/pokeapi_client.py linha 64
+#    - Imagens usadas por PokemonDataset linha 27
+#    - Salva em estrutura esperada pelo train_model() linha 146
 
 def download_pokemon_images(num_pokemon: int = 151, output_dir: str = "data/pokemon_images"):
     """Baixa imagens de Pokémon da PokéAPI."""
@@ -117,6 +145,22 @@ def download_pokemon_images(num_pokemon: int = 151, output_dir: str = "data/poke
     print(f"Imagens baixadas em {output_dir}")
 
 
+# =============================================================================
+# TRAIN_MODEL - Pipeline Completo de Treinamento com Transfer Learning
+# =============================================================================
+# 
+#  O QUE FAZ:
+#    - Treina modelo MobileNetV2 para classificar 151 Pokémon
+#    - Usa Transfer Learning: modelo pré-treinado + fine-tuning
+#    - Aplica data augmentation agressivo para melhorar generalização
+#    - Salva melhor modelo automaticamente (early stopping manual)
+#
+#  REFERÊNCIAS:
+#    - Usa PokemonClassifierModel de src/vision/model_loader.py linha 161
+#    - Usa PokemonDataset definido linha 24
+#    - Salva modelo em models/mobilenet_pokemon/model.pth linha 230-231
+#    - Modelo carregado por src/vision/pokemon_classifier.py para inferência
+
 def train_model(
     images_dir: str = "data/pokemon_images",
     model_save_path: str = "models/mobilenet_pokemon",
@@ -130,7 +174,20 @@ def train_model(
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Usando dispositivo: {device}")
     
-    # Transformações para treinamento com data augmentation agressivo
+    # ---------------------------------------------------------------------------
+    # DATA AUGMENTATION - Transformações para Melhorar Generalização
+    # ---------------------------------------------------------------------------
+    # Aplica transformações aleatórias para criar variações das imagens
+    # Isso "aumenta" o dataset artificialmente e melhora a generalização
+    # 
+    # Transformações aplicadas:
+    # - Resize + RandomCrop: força modelo a reconhecer Pokémon em diferentes escalas
+    # - RandomHorizontalFlip: aprende que Pokémon pode estar virado
+    # - RandomRotation: tolera pequenas rotações
+    # - ColorJitter: robustez a diferentes iluminações e cores
+    # - RandomAffine: tolera pequenas translações
+    # - Normalize: usa média/desvio do ImageNet (MobileNetV2 foi treinado nisso)
+    # ---------------------------------------------------------------------------
     train_transform = transforms.Compose([
         transforms.Resize((256, 256)),
         transforms.RandomCrop(224),
@@ -161,11 +218,23 @@ def train_model(
     model = PokemonClassifierModel(num_classes=num_pokemon)
     model.to(device)
     
-    # Descongela mais camadas para fine-tuning (melhor para poucos dados)
-    # Descongela as últimas 10 camadas
+    # ---------------------------------------------------------------------------
+    # FINE-TUNING - Estratégia de Transfer Learning
+    # ---------------------------------------------------------------------------
+    # Por padrão, PokemonClassifierModel congela features para transfer learning
+    # Aqui descongelamos as últimas camadas para fine-tuning adaptado a Pokémon
+    # 
+    # Estratégia:
+    # 1. Últimas 10 camadas de features: aprendem características específicas de Pokémon
+    # 2. Camada de classificação: completamente retreinada para 151 classes
+    # 
+    # Por que funciona:
+    # - Primeiras camadas: detectores genéricos (bordas, texturas) - mantém congelado
+    # - Últimas camadas: características específicas - precisa adaptar para Pokémon
+    # - Classificador: totalmente novo para 151 classes ao invés de 1000 do ImageNet
+    # ---------------------------------------------------------------------------
     for param in model.model.features[-10:].parameters():
         param.requires_grad = True
-    # Descongela completamente a camada de classificação
     for param in model.model.classifier.parameters():
         param.requires_grad = True
     
@@ -180,7 +249,15 @@ def train_model(
     best_val_acc = 0.0
     
     for epoch in range(num_epochs):
-        # Treino
+        # ---------------------------------------------------------------------------
+        # TRAINING LOOP - Fase de Treinamento
+        # ---------------------------------------------------------------------------
+        # Loop padrão de treinamento em PyTorch:
+        # 1. Forward pass: imagem → modelo → predições
+        # 2. Calcula loss: quão errado está o modelo
+        # 3. Backward pass: calcula gradientes (backpropagation)
+        # 4. Atualiza pesos: optimizer ajusta parâmetros do modelo
+        # ---------------------------------------------------------------------------
         model.train()
         train_loss = 0.0
         train_correct = 0
@@ -189,18 +266,26 @@ def train_model(
         for images, labels in tqdm(train_loader, desc=f"Época {epoch+1}/{num_epochs} [Treino]"):
             images, labels = images.to(device), labels.to(device)
             
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            optimizer.zero_grad()      # Zera gradientes
+            outputs = model(images)    # Forward pass
+            loss = criterion(outputs, labels)  # Calcula erro
+            loss.backward()            # Backward pass (calcula gradientes)
+            optimizer.step()           # Atualiza pesos
             
             train_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
             train_total += labels.size(0)
             train_correct += (predicted == labels).sum().item()
         
-        # Validação
+        # ---------------------------------------------------------------------------
+        # VALIDATION LOOP - Avaliação sem Atualizar Pesos
+        # ---------------------------------------------------------------------------
+        # Validação verifica performance em dados não vistos durante treino
+        # torch.no_grad(): desliga cálculo de gradientes para economizar memória
+        # model.eval(): desativa dropout e batch normalization
+        # 
+        # Importante: validação NÃO atualiza pesos do modelo!
+        # ---------------------------------------------------------------------------
         model.eval()
         val_loss = 0.0
         val_correct = 0
@@ -224,7 +309,13 @@ def train_model(
         print(f"  Treino - Loss: {train_loss/len(train_loader):.4f}, Acc: {train_acc:.2f}%")
         print(f"  Validação - Loss: {val_loss/len(val_loader):.4f}, Acc: {val_acc:.2f}%")
         
-        # Salva melhor modelo
+        # ---------------------------------------------------------------------------
+        # CHECKPOINTING - Salva Melhor Modelo (Early Stopping Manual)
+        # ---------------------------------------------------------------------------
+        # Salva apenas quando acurácia de validação melhora
+        # Evita overfitting: modelo final é o que teve melhor performance em validação
+        # Salvo em: models/mobilenet_pokemon/model.pth
+        # ---------------------------------------------------------------------------
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             model_loader = ModelLoader(model_save_path)

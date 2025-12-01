@@ -65,7 +65,7 @@ with st.sidebar:
         
         1. **Busca**: Encontra Pokemon relevantes
         2. **Contexto**: Adiciona informacoes ao prompt
-        3. **Geracao**: LLM cria resposta informada
+        3. **Geração**: LLM cria resposta informada
         
         **Resultado**: Respostas mais precisas e contextualizadas!
         """)
@@ -196,18 +196,17 @@ for message in st.session_state.messages:
 
 # Input do usuário
 if prompt := st.chat_input("Pergunte sobre Pokémon..."):
-    # Adiciona mensagem do usuário
+    # Adiciona mensagem do usuário ao histórico
     st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    with st.chat_message("user"):
-        st.markdown(prompt)
     
     # Gera resposta
     with st.chat_message("assistant"):
         with st.spinner("🤔 Pensando..."):
             response = chatbot.get_response(prompt)
-            st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    # Rerun para atualizar o histórico completo
+    st.rerun()
 
 # Footer
 st.markdown("---")

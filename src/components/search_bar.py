@@ -37,28 +37,36 @@ def search_bar(placeholder: str = "Digite o nome ou ID do Pokémon...") -> Optio
 def quick_search_buttons(pokemon_list: list, limit: int = 12):
     """
     Exibe botões de busca rápida para Pokémon populares.
-    
+
     Args:
         pokemon_list: Lista de Pokémon (formato PokéAPI)
         limit: Número máximo de botões
     """
     if not pokemon_list:
         return None
-    
+
     st.subheader("Busca Rápida")
-    
-    # Limita a lista
+
+    # Limita a lista exibida
     display_list = pokemon_list[:limit]
-    
-    # Cria grid de botões
+
+    # Usa nome como key única → não muda, não quebra a renderização
     cols = st.columns(4)
-    
+
+    clicked = None
+
     for idx, pokemon in enumerate(display_list):
         col = cols[idx % 4]
-        pokemon_name = pokemon.get('name', 'unknown').title()
+        
+        raw_name = pokemon.get("name", "unknown")
+        pokemon_name = raw_name.title()
+
+        # KEY única e estável
+        button_key = f"quick_btn_{raw_name}"
+
         with col:
-            if st.button(pokemon_name, key=f"quick_{idx}", use_container_width=True):
-                return pokemon.get('name')
-    
-    return None
+            if st.button(pokemon_name, key=button_key, use_container_width=True):
+                clicked = raw_name
+
+    return clicked
 

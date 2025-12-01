@@ -15,12 +15,7 @@ load_pokedex_css()
 
 st.title("📸 Reconhecimento de Imagem de Pokémon")
 
-st.markdown("""
-Envie uma imagem de um Pokémon e nosso sistema de **Visão Computacional** 
-usando **MobileNetV2 (PyTorch)** irá identificá-lo automaticamente.
 
-**Modelo treinado com 96%+ de acurácia!** 🎯
-""")
 
 try:
     from PIL import Image
@@ -140,28 +135,7 @@ try:
                             st.exception(e)
             else:
                 st.warning("⚠️ Modelo não está pronto.")
-    else:
-        st.info("👆 Faça upload de uma imagem para começar.")
-        
-        # Informações sobre o modelo
-        st.divider()
-        from pathlib import Path
-        model_path = Path("models/mobilenet_pokemon/model.pth")
-        model_trained = model_path.exists()
-        
-        if model_trained:
-            st.success("✅ **Modelo treinado disponível!** (Acurácia: ~96%)")
-            st.markdown("""
-            O sistema está usando um modelo MobileNetV2 treinado especificamente para Pokémon,
-            com **96.15% de acurácia** na validação. Isso significa que a identificação deve ser
-            muito mais precisa do que antes!
-            """)
-        else:
-            st.info("💡 **Dica:** Para melhorar a precisão, você pode treinar o modelo:")
-            st.code("""
-python scripts/train_model.py --download --num-pokemon 151
-python scripts/train_model.py --train --epochs 20
-            """)
+
         
 except Exception as e:
     st.error(f"Erro ao carregar página: {e}")
